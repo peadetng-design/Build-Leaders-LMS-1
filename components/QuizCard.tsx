@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Quiz, QuizOption } from '../types';
-import { CheckCircle2, XCircle, Info } from 'lucide-react';
+import { CheckCircle2, XCircle, Info, Circle } from 'lucide-react';
 
 interface QuizCardProps {
   quiz: Quiz;
@@ -15,49 +15,66 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
     setSelectedOptionId(previousAttempt || null);
   }, [previousAttempt]);
 
+  const isAttempted = !!selectedOptionId;
+
   const handleSelect = (option: QuizOption) => {
-    if (selectedOptionId) return; // Prevent changing answer after selection
+    if (isAttempted) return; // Prevent changing answer after selection (One-time submission)
     setSelectedOptionId(option.option_id);
     onAttempt(quiz.quiz_id, option.option_id, option.is_correct);
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8 transition-all duration-300 hover:shadow-md">
       {/* Question Header */}
       <div className="p-6 bg-gray-50 border-b border-gray-100">
-        <div className="flex justify-between items-start mb-2">
-           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+        <div className="flex justify-between items-center mb-3">
+           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wide uppercase
+             ${quiz.question_type === 'Bible Quiz' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'}`}>
              {quiz.question_type}
            </span>
            {quiz.reference && (
-             <span className="text-xs text-gray-500 font-mono">{quiz.reference}</span>
+             <span className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded border border-gray-200">
+               {quiz.reference}
+             </span>
            )}
         </div>
-        <h3 className="text-lg font-medium text-gray-900 leading-snug">
+        <h3 className="text-lg md:text-xl font-medium text-gray-900 leading-snug">
           {quiz.question_text}
         </h3>
       </div>
 
       {/* Options List */}
-      <div className="p-6 space-y-3">
+      <div className="p-6 space-y-4">
         {quiz.options.map((option) => {
           const isSelected = selectedOptionId === option.option_id;
           const isCorrect = option.is_correct;
-          const showResults = !!selectedOptionId;
-
-          let containerClass = "relative flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ";
           
-          if (!showResults) {
-            containerClass += "hover:bg-indigo-50 border-gray-200 hover:border-indigo-300";
+          // --- STYLING LOGIC ---
+          let containerClass = "relative flex flex-col p-4 rounded-xl border-2 transition-all duration-300 group ";
+          let icon = <Circle className="h-6 w-6 text-gray-300 group-hover:text-indigo-400 transition-colors" />;
+          let textClass = "text-gray-700 font-medium text-lg";
+
+          if (!isAttempted) {
+             // 1. PRE-ATTEMPT STATE
+             containerClass += "cursor-pointer bg-white border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 hover:shadow-sm";
           } else {
-            // Results Mode
-            if (isCorrect) {
-              containerClass += "bg-green-50 border-green-500 ring-1 ring-green-500";
-            } else if (isSelected && !isCorrect) {
-              containerClass += "bg-red-50 border-red-500";
-            } else {
-              containerClass += "opacity-60 border-gray-100 bg-gray-50";
-            }
+             // 2. POST-ATTEMPT STATE (LOCKED)
+             containerClass += "cursor-default "; // No pointer events hint
+             
+             if (isCorrect) {
+               // CORRECT OPTION (Always highlighted Green if attempted)
+               containerClass += "bg-green-50 border-green-500 ring-1 ring-green-500/20";
+               icon = <CheckCircle2 className="h-6 w-6 text-green-600 fill-green-100" />;
+               textClass = "text-green-900 font-bold";
+             } else if (isSelected && !isCorrect) {
+               // SELECTED WRONG OPTION (Highlighted Red)
+               containerClass += "bg-red-50 border-red-500 ring-1 ring-red-500/20";
+               icon = <XCircle className="h-6 w-6 text-red-600 fill-red-100" />;
+               textClass = "text-red-900 font-bold";
+             } else {
+               // UNSELECTED WRONG OPTIONS (Dimmed)
+               containerClass += "bg-gray-50 border-gray-100 opacity-60 grayscale-[0.5]";
+             }
           }
 
           return (
@@ -65,34 +82,52 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
               key={option.option_id}
               onClick={() => handleSelect(option)}
               className={containerClass}
+              role={isAttempted ? "article" : "button"}
+              aria-disabled={isAttempted}
+              tabIndex={isAttempted ? -1 : 0}
+              onKeyDown={(e) => {
+                if (!isAttempted && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  handleSelect(option);
+                }
+              }}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className={`
-                    flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full border text-xs font-bold mr-3
-                    ${!showResults ? 'border-gray-400 text-gray-500' : 
-                      isCorrect ? 'bg-green-500 border-green-500 text-white' : 
-                      (isSelected ? 'bg-red-500 border-red-500 text-white' : 'border-gray-300 text-gray-400')}
-                  `}>
-                    {option.option_id}
-                  </div>
-                  <span className={`font-medium ${showResults && isCorrect ? 'text-green-900' : 'text-gray-900'}`}>
+              <div className="flex items-start">
+                <div className="flex-shrink-0 mt-0.5 mr-4 transition-transform duration-300">
+                  {/* Icon or Label */}
+                  {isAttempted ? icon : (
+                     <div className="h-7 w-7 rounded-full border-2 border-gray-300 text-sm font-bold text-gray-500 flex items-center justify-center group-hover:border-indigo-400 group-hover:text-indigo-600 transition-colors">
+                       {option.option_id}
+                     </div>
+                  )}
+                </div>
+                
+                <div className="flex-1">
+                  <span className={`block ${textClass} transition-colors duration-200`}>
                     {option.text}
                   </span>
                 </div>
-                
-                {/* Status Icon */}
-                {showResults && isCorrect && <CheckCircle2 className="h-5 w-5 text-green-600" />}
-                {showResults && isSelected && !isCorrect && <XCircle className="h-5 w-5 text-red-600" />}
               </div>
 
-              {/* Explanation Reveal */}
-              {showResults && (
-                <div className={`mt-3 pt-3 border-t text-sm flex items-start animate-fadeIn
-                  ${isCorrect ? 'border-green-200 text-green-800' : 'border-gray-200 text-gray-600'}
+              {/* EXPLANATION REVEAL (Only show if attempted) */}
+              {isAttempted && (
+                <div className={`
+                   mt-4 pt-3 border-t text-sm leading-relaxed
+                   flex items-start gap-3
+                   animate-fadeIn origin-top
+                   ${isCorrect ? 'border-green-200 text-green-800' : (isSelected ? 'border-red-200 text-red-800' : 'border-gray-200 text-gray-600')}
                 `}>
-                  <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 opacity-70" />
-                  <span>{option.explanation}</span>
+                  <Info className={`h-5 w-5 flex-shrink-0 mt-0.5 ${isCorrect ? 'text-green-600' : 'text-gray-400'}`} />
+                  <div className="flex-1">
+                    <span className="font-bold block mb-1 text-xs uppercase tracking-wider opacity-80">
+                      {isCorrect ? 'Correct Answer Explanation' : (isSelected ? 'Why this is incorrect' : 'Alternative Option Analysis')}
+                    </span>
+                    {/* Explanation HTML Block */}
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: option.explanation }} 
+                    />
+                  </div>
                 </div>
               )}
             </div>
