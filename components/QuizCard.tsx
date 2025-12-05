@@ -114,7 +114,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
                 <div className={`
                    mt-4 pt-3 border-t text-sm leading-relaxed
                    flex items-start gap-3
-                   animate-fadeIn origin-top
+                   animate-slideDown origin-top
                    ${isCorrect ? 'border-green-200 text-green-800' : (isSelected ? 'border-red-200 text-red-800' : 'border-gray-200 text-gray-600')}
                 `}>
                   <Info className={`h-5 w-5 flex-shrink-0 mt-0.5 ${isCorrect ? 'text-green-600' : 'text-gray-400'}`} />
