@@ -4,7 +4,7 @@ import { Lesson, StudentAttempt, Quiz, User, Role, LessonStats } from '../types'
 
 const MOCK_LESSON_GENESIS: Lesson = {
   lesson_id: 'GENESIS-CH1',
-  title: 'Bible Study – Genesis 1',
+  title: 'The Beginning of Wisdom: Genesis 1',
   description: 'A study of Genesis chapter 1 with leadership insights regarding creation and order.',
   book: 'Genesis',
   chapter: 1,
@@ -15,6 +15,7 @@ const MOCK_LESSON_GENESIS: Lesson = {
     body: `
       <h2>The Foundation of Leadership: Order from Chaos</h2>
       <p>In the beginning, the earth was formless and empty. This state of "tohu wa-bohu" (formless and void) represents the starting point of many leadership challenges. A true leader does not shy away from chaos but rather sees it as an opportunity to establish order, purpose, and beauty.</p>
+      <h3>Vision Precedes Action</h3>
       <p>Leadership begins with vision. "And God said, 'Let there be light.'" Before any physical work was done, the vision was articulated. This teaches us that effective leadership is communicative and intentional. It speaks into the darkness and defines the direction before mobilizing resources.</p>
       <h3>The Principle of Separation</h3>
       <p>Notice how creation involved separation: light from darkness, water from land, day from night. Leadership often requires making clear distinctions—setting boundaries, defining roles, and distinguishing between what is helpful and what is harmful to the organizational culture.</p>
@@ -71,9 +72,9 @@ const MOCK_LESSON_GENESIS: Lesson = {
 };
 
 const USERS: User[] = [
-  { id: 'admin1', name: 'Sarah Admin', email: 'sarah@lms.com', role: 'ADMIN', avatarUrl: 'https://picsum.photos/id/1011/200/200' },
-  { id: 'student1', name: 'John Student', email: 'john@lms.com', role: 'STUDENT', avatarUrl: 'https://picsum.photos/id/1012/200/200' },
-  { id: 'mentor1', name: 'Mike Mentor', email: 'mike@lms.com', role: 'MENTOR', avatarUrl: 'https://picsum.photos/id/1025/200/200' }
+  { id: 'admin1', name: 'Sarah Admin', email: 'sarah@lms.com', role: 'ADMIN', avatarUrl: 'https://i.pravatar.cc/150?u=sarah' },
+  { id: 'student1', name: 'John Student', email: 'john@lms.com', role: 'STUDENT', avatarUrl: 'https://i.pravatar.cc/150?u=john' },
+  { id: 'mentor1', name: 'Mike Mentor', email: 'mike@lms.com', role: 'MENTOR', avatarUrl: 'https://i.pravatar.cc/150?u=mike' }
 ];
 
 // --- Service Logic ---
@@ -104,7 +105,6 @@ class LMSService {
   }
 
   saveLesson(lesson: Lesson): void {
-    // Check if exists, update or push
     const index = this.lessons.findIndex(l => l.lesson_id === lesson.lesson_id);
     if (index >= 0) {
       this.lessons[index] = lesson;
@@ -115,8 +115,6 @@ class LMSService {
 
   // Quiz Logic
   submitAttempt(attempt: StudentAttempt): void {
-    // In a real app, this would check duplication rules. 
-    // Here we just push.
     this.attempts.push(attempt);
   }
 
@@ -132,17 +130,12 @@ class LMSService {
     return {
       totalAttempts: lessonAttempts.length,
       avgScore: Math.round((correct / lessonAttempts.length) * 100),
-      completionRate: 85 // Mocked for visualization
+      completionRate: 85
     };
   }
 
-  // Parsing Helper (Simulating the Excel Parsing Logic described in prompt)
   parseImportData(fileContent: any): Lesson {
-    // In a real implementation, this parses the CSV/XLSX.
-    // For this demo, we assume the user might "Mock Load" the standard template
-    // or we'd parse a JSON object if they pasted it.
-    
-    // Returning the mock genesis lesson to simulate a successful complex parse
+    // Mock parsing logic
     return { ...MOCK_LESSON_GENESIS, lesson_id: `GENESIS-CH${this.lessons.length + 1}`, title: `Imported Lesson ${this.lessons.length + 1}` };
   }
 }
