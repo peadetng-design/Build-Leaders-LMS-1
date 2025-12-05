@@ -50,12 +50,13 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
         {quiz.options.map((option) => {
           const isSelected = selectedOptionId === option.option_id;
           const isCorrect = option.is_correct;
+          const isWrongSelection = isSelected && !isCorrect;
           
           // --- STYLING LOGIC ---
-          // Base styles
           let containerClass = "relative flex flex-col p-4 rounded-xl border-2 transition-all duration-200 ";
           let icon = <Circle className="h-6 w-6 text-gray-300 group-hover:text-indigo-400 transition-colors" />;
           let textClass = "text-gray-700 font-medium text-lg";
+          let badge = null;
 
           if (!isAttempted) {
              // 1. PRE-ATTEMPT STATE (Interactive)
@@ -67,17 +68,28 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
              if (isCorrect) {
                // CORRECT OPTION (Always Green)
                containerClass += "bg-green-50 border-green-500 ring-1 ring-green-500/20";
-               icon = <CheckCircle2 className="h-6 w-6 text-green-600 fill-green-100" />;
+               icon = <CheckCircle2 className="h-6 w-6 text-green-600 fill-green-100" aria-label="Correct Answer" />;
                textClass = "text-green-900 font-bold";
-             } else if (isSelected && !isCorrect) {
+               badge = (
+                 <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-200 text-green-800 uppercase tracking-wide">
+                   Correct Answer
+                 </span>
+               );
+             } else if (isWrongSelection) {
                // SELECTED WRONG OPTION (Red)
                containerClass += "bg-red-50 border-red-500 ring-1 ring-red-500/20";
-               icon = <XCircle className="h-6 w-6 text-red-600 fill-red-100" />;
+               icon = <XCircle className="h-6 w-6 text-red-600 fill-red-100" aria-label="Incorrect Selection" />;
                textClass = "text-red-900 font-bold";
+               badge = (
+                 <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-200 text-red-800 uppercase tracking-wide">
+                   Your Selection
+                 </span>
+               );
              } else {
-               // UNSELECTED WRONG OPTIONS (Dimmed)
-               containerClass += "bg-gray-50 border-gray-100 opacity-50 grayscale";
-               icon = <Circle className="h-6 w-6 text-gray-300" />;
+               // UNSELECTED WRONG OPTIONS (Dimmed but explicit)
+               // Using XCircle here too so colorblind users know it's not the answer, even if they didn't pick it.
+               containerClass += "bg-gray-50 border-gray-100 opacity-60 grayscale";
+               icon = <XCircle className="h-6 w-6 text-gray-300" aria-label="Incorrect Option" />;
              }
           }
 
@@ -96,7 +108,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
                 }
               }}
             >
-              <div className="flex items-start pointer-events-none"> {/* content pointer-events-none ensures clicks go to container */}
+              <div className="flex items-start pointer-events-none">
                 <div className="flex-shrink-0 mt-0.5 mr-4 transition-transform duration-300">
                   {/* Icon or Label */}
                   {isAttempted ? icon : (
@@ -107,9 +119,12 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
                 </div>
                 
                 <div className="flex-1">
-                  <span className={`block ${textClass} transition-colors duration-200`}>
-                    {option.text}
-                  </span>
+                  <div className="flex flex-wrap items-center">
+                    <span className={`block ${textClass} transition-colors duration-200 mr-2`}>
+                      {option.text}
+                    </span>
+                    {badge}
+                  </div>
                 </div>
               </div>
 
@@ -121,7 +136,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
                    animate-slideDown origin-top cursor-text
                    ${isCorrect ? 'border-green-200 text-green-800' : (isSelected ? 'border-red-200 text-red-800' : 'border-gray-200 text-gray-600')}
                 `}
-                onClick={(e) => e.stopPropagation()} // Allow clicking/selecting text in explanation
+                onClick={(e) => e.stopPropagation()} 
                 >
                   <div className="flex-shrink-0 mt-0.5">
                     {isCorrect ? <Info className="h-5 w-5 text-green-600" /> : (isSelected ? <AlertCircle className="h-5 w-5 text-red-500" /> : <Info className="h-5 w-5 text-gray-400" />)}
