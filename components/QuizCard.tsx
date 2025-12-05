@@ -18,7 +18,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
   const isAttempted = !!selectedOptionId;
 
   const handleSelect = (option: QuizOption) => {
-    // LOCK: Prevent changing answer after selection (One-time submission)
+    // LOCK: Prevent changing answer after selection (Double check)
     if (isAttempted) return; 
     
     setSelectedOptionId(option.option_id);
@@ -87,7 +87,6 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
                );
              } else {
                // UNSELECTED WRONG OPTIONS (Dimmed but explicit)
-               // Using XCircle here too so colorblind users know it's not the answer, even if they didn't pick it.
                containerClass += "bg-gray-50 border-gray-100 opacity-60 grayscale";
                icon = <XCircle className="h-6 w-6 text-gray-300" aria-label="Incorrect Option" />;
              }
@@ -96,7 +95,8 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
           return (
             <div 
               key={option.option_id}
-              onClick={() => handleSelect(option)}
+              // STRICT LOCK: Remove onClick handler if attempted
+              onClick={isAttempted ? undefined : () => handleSelect(option)}
               className={containerClass}
               role={isAttempted ? "article" : "button"}
               aria-disabled={isAttempted}
@@ -108,7 +108,9 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
                 }
               }}
             >
-              <div className="flex items-start pointer-events-none">
+              {/* Option Header (Icon + Text) */}
+              {/* pointer-events-none ensures no hover/click interaction on the visual parts when locked */}
+              <div className={`flex items-start ${isAttempted ? 'pointer-events-none' : ''}`}>
                 <div className="flex-shrink-0 mt-0.5 mr-4 transition-transform duration-300">
                   {/* Icon or Label */}
                   {isAttempted ? icon : (
@@ -133,7 +135,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
                 <div className={`
                    mt-4 pt-3 border-t text-sm leading-relaxed
                    flex items-start gap-3
-                   animate-slideDown origin-top cursor-text
+                   animate-slideDown origin-top cursor-text pointer-events-auto
                    ${isCorrect ? 'border-green-200 text-green-800' : (isSelected ? 'border-red-200 text-red-800' : 'border-gray-200 text-gray-600')}
                 `}
                 onClick={(e) => e.stopPropagation()} 
