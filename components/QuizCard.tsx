@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Quiz, QuizOption } from '../types';
-import { CheckCircle2, XCircle, Info, Circle } from 'lucide-react';
+import { CheckCircle2, XCircle, Info, Circle, AlertCircle } from 'lucide-react';
 
 interface QuizCardProps {
   quiz: Quiz;
@@ -18,7 +18,9 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
   const isAttempted = !!selectedOptionId;
 
   const handleSelect = (option: QuizOption) => {
-    if (isAttempted) return; // Prevent changing answer after selection (One-time submission)
+    // LOCK: Prevent changing answer after selection (One-time submission)
+    if (isAttempted) return; 
+    
     setSelectedOptionId(option.option_id);
     onAttempt(quiz.quiz_id, option.option_id, option.is_correct);
   };
@@ -50,30 +52,32 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
           const isCorrect = option.is_correct;
           
           // --- STYLING LOGIC ---
-          let containerClass = "relative flex flex-col p-4 rounded-xl border-2 transition-all duration-300 group ";
+          // Base styles
+          let containerClass = "relative flex flex-col p-4 rounded-xl border-2 transition-all duration-200 ";
           let icon = <Circle className="h-6 w-6 text-gray-300 group-hover:text-indigo-400 transition-colors" />;
           let textClass = "text-gray-700 font-medium text-lg";
 
           if (!isAttempted) {
-             // 1. PRE-ATTEMPT STATE
-             containerClass += "cursor-pointer bg-white border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 hover:shadow-sm";
+             // 1. PRE-ATTEMPT STATE (Interactive)
+             containerClass += "cursor-pointer bg-white border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 hover:shadow-sm group";
           } else {
-             // 2. POST-ATTEMPT STATE (LOCKED)
-             containerClass += "cursor-default "; // No pointer events hint
+             // 2. POST-ATTEMPT STATE (Locked)
+             containerClass += "cursor-default ";
              
              if (isCorrect) {
-               // CORRECT OPTION (Always highlighted Green if attempted)
+               // CORRECT OPTION (Always Green)
                containerClass += "bg-green-50 border-green-500 ring-1 ring-green-500/20";
                icon = <CheckCircle2 className="h-6 w-6 text-green-600 fill-green-100" />;
                textClass = "text-green-900 font-bold";
              } else if (isSelected && !isCorrect) {
-               // SELECTED WRONG OPTION (Highlighted Red)
+               // SELECTED WRONG OPTION (Red)
                containerClass += "bg-red-50 border-red-500 ring-1 ring-red-500/20";
                icon = <XCircle className="h-6 w-6 text-red-600 fill-red-100" />;
                textClass = "text-red-900 font-bold";
              } else {
                // UNSELECTED WRONG OPTIONS (Dimmed)
-               containerClass += "bg-gray-50 border-gray-100 opacity-60 grayscale-[0.5]";
+               containerClass += "bg-gray-50 border-gray-100 opacity-50 grayscale";
+               icon = <Circle className="h-6 w-6 text-gray-300" />;
              }
           }
 
@@ -92,7 +96,7 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
                 }
               }}
             >
-              <div className="flex items-start">
+              <div className="flex items-start pointer-events-none"> {/* content pointer-events-none ensures clicks go to container */}
                 <div className="flex-shrink-0 mt-0.5 mr-4 transition-transform duration-300">
                   {/* Icon or Label */}
                   {isAttempted ? icon : (
@@ -114,10 +118,14 @@ export const QuizCard: React.FC<QuizCardProps> = ({ quiz, onAttempt, previousAtt
                 <div className={`
                    mt-4 pt-3 border-t text-sm leading-relaxed
                    flex items-start gap-3
-                   animate-slideDown origin-top
+                   animate-slideDown origin-top cursor-text
                    ${isCorrect ? 'border-green-200 text-green-800' : (isSelected ? 'border-red-200 text-red-800' : 'border-gray-200 text-gray-600')}
-                `}>
-                  <Info className={`h-5 w-5 flex-shrink-0 mt-0.5 ${isCorrect ? 'text-green-600' : 'text-gray-400'}`} />
+                `}
+                onClick={(e) => e.stopPropagation()} // Allow clicking/selecting text in explanation
+                >
+                  <div className="flex-shrink-0 mt-0.5">
+                    {isCorrect ? <Info className="h-5 w-5 text-green-600" /> : (isSelected ? <AlertCircle className="h-5 w-5 text-red-500" /> : <Info className="h-5 w-5 text-gray-400" />)}
+                  </div>
                   <div className="flex-1">
                     <span className="font-bold block mb-1 text-xs uppercase tracking-wider opacity-80">
                       {isCorrect ? 'Correct Answer Explanation' : (isSelected ? 'Why this is incorrect' : 'Alternative Option Analysis')}
